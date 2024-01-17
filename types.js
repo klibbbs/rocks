@@ -1,3 +1,77 @@
+class Torus {
+
+    #l;
+    #r;
+    #b;
+    #t;
+    #w;
+    #h;
+
+    constructor(l, r, b, t) {
+        this.#l = l;
+        this.#r = r;
+        this.#b = b;
+        this.#t = t;
+        this.#w = this.#r - this.#l;
+        this.#h = this.#t - this.#b;
+    }
+
+    normalize(pos, pre) {
+        if (pos.x > this.#r) {
+            pos.x -= this.#w;
+            pre.x -= this.#w;
+        } else if (pos.x < this.#l) {
+            pos.x += this.#w;
+            pre.x += this.#w;
+        }
+
+        if (pos.y > this.#t) {
+            pos.y -= this.#h;
+            pre.y -= this.#h;
+        } else if (pos.y < this.#b) {
+            pos.y += this.#h;
+            pre.y += this.#h;
+        }
+    }
+
+    kaleidescope(pos, r) {
+        let k = [pos];
+
+        let x;
+        let y;
+
+        if (pos.x + r > this.#r) {
+            x = pos.x - this.#w;
+        }
+
+        if (pos.x - r < this.#l) {
+            x = pos.x + this.#w;
+        }
+
+        if (pos.y + r > this.#t) {
+            y = pos.y - this.#h;
+        }
+
+        if (pos.y - r < this.#b) {
+            y = pos.y + this.#h;
+        }
+
+        if (x !== undefined) {
+            k.push(new Position(x, pos.y, pos.th));
+        }
+
+        if (y !== undefined) {
+            k.push(new Position(pos.x, y, pos.th));
+        }
+
+        if (x !== undefined && y !== undefined) {
+            k.push(new Position(x, y, pos.th));
+        }
+
+        return k;
+    }
+}
+
 class Camera {
 
     x;
@@ -122,19 +196,36 @@ class Mesh {
 
     prims;
 
+    #r;
+
     constructor(prims) {
         this.prims = prims || [];
+
+        this.#r = Math.max(...this.prims.map(prim => prim.radius()));
     }
 
-    transform(transform) {
-    }
-
-    draw(gfx, transform) {
-
+    radius() {
+        return this.#r;
     }
 }
 
-class Ellipse {
+class Primitive {
+
+    #r;
+
+    constructor(r) {
+        this.#r = r;
+    }
+
+    radius() {
+        return this.#r;
+    }
+
+    draw(gfx, transform) {
+    }
+}
+
+class Ellipse extends Primitive {
 
     x;
     y;
@@ -143,6 +234,8 @@ class Ellipse {
     th;
 
     constructor(x, y, a, b, th) {
+        super(Math.max(a, b));
+
         this.x = x;
         this.y = y;
         this.a = a;
@@ -166,11 +259,13 @@ class Circle extends Ellipse {
     }
 }
 
-class Polygon {
+class Polygon extends Primitive {
 
     vs;
 
     constructor(vs, stroke, fill) {
+        super(Math.sqrt(Math.max(...vs.map(v => v[0] * v[0] + v[1] * v[1]))));
+
         this.vs = vs;
         this.stroke = stroke;
         this.fill = fill;

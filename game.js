@@ -5,6 +5,7 @@ const renderer = new Renderer(canvas);
 const input = new Input(canvas);
 
 const CAMERA_H = 200;
+const CAMERA_W = renderer.aspect * CAMERA_H;
 
 const PLAYER_A = 100;
 const PLAYER_W = Math.PI;
@@ -16,7 +17,9 @@ controller.play(30);
 function setup(ctx) {
     console.log('Setup...');
 
-    ctx.camera = new Camera(0, 0, 0, renderer.aspect * CAMERA_H, CAMERA_H),
+    ctx.camera = new Camera(0, 0, 0, CAMERA_W, CAMERA_H);
+
+    ctx.torus = new Torus(-CAMERA_W / 2, CAMERA_W / 2, -CAMERA_H / 2, CAMERA_H / 2);
 
     ctx.player = {
         enabled: true,
@@ -94,6 +97,9 @@ function step(ctx, dt, t) {
 
         ctx.player.vel.x += (ax * dt);
         ctx.player.vel.y += (ay * dt);
+
+        // Normalize toroidal coordinates
+        ctx.torus.normalize(ctx.player.pos, ctx.player.pre);
     }
 }
 
@@ -101,10 +107,10 @@ function render(ctx, blend) {
 
     // Render player
     if (ctx.player.enabled) {
-        renderer.pushMesh(
-            ctx.player.mesh,
-            ctx.player.pos.blend(ctx.player.pre, blend).transform()
-        );
+        ctx.torus.kaleidescope(
+            ctx.player.pos.blend(ctx.player.pre, blend),
+            ctx.player.mesh.radius()
+        ).forEach(pos => renderer.pushMesh(ctx.player.mesh, pos.transform()));
     }
 
     // Render rocks
