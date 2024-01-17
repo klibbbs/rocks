@@ -1,2 +1,2 @@
-# rocks
-Asteroids clone
+# Rocks
+An asteroids clone.

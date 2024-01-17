@@ -1,0 +1,32 @@
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <title>Rocks</title>
+
+    <style>
+      body {
+          font-family: "Helvetica";
+      }
+
+      #game {
+          position: absolute;
+          left: 50%;
+          transform: translateX(-50%);
+          width: 960px;
+          height: 480px;
+          border: 1px solid #000;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="game" width="960" height="480"></canvas>
+
+    <script src="types.js"></script>
+
+    <script src="renderer.js"></script>
+    <script src="input.js"></script>
+    <script src="controller.js"></script>
+
+    <script src="game.js"></script>
+  </body>
+</html>
