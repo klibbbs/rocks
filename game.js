@@ -30,21 +30,27 @@ function setup(ctx) {
             new Polygon(
                 [[0, 10], [10, -10], [0, -5], [-10, -10]],
                 'rgb(0 0 0)',
-                'rgb(255, 255, 0)',
+                'rgb(255 255 0)',
             )
         ]),
     };
 
-    ctx.rocks = [];
-
     ctx.shots = [];
+
+    ctx.rocks = [];
 
     for (let i = 0; i < ROCK_COUNT; i++) {
         ctx.rocks.push({
             enabled: true,
-            pos: new Position(),
-            vel: new Position(),
-            mesh: new Mesh(),
+            pos: new Position(Math.pow(-1, i) * (i + 1) * 50, Math.pow(-1, i * 2) * (i + 1) * 20, 0),
+            vel: new Position(0, 0, 2),
+            mesh: new Mesh([
+                new Ellipse(
+                    0, 0, 20, 15, 0,
+                    'rgb(0 0 0)',
+                    'rgb(128 128 128)',
+                )
+            ]),
         });
     }
 
@@ -81,7 +87,7 @@ function step(ctx, dt, t) {
         // Advance state
         ctx.player.pre = {...ctx.player.pos};
 
-        // Apply controls
+        // Apply physics
         const cos = Math.cos(ctx.player.pos.th + Math.PI / 2);
         const sin = Math.sin(ctx.player.pos.th + Math.PI / 2);
 
@@ -101,6 +107,22 @@ function step(ctx, dt, t) {
         // Normalize toroidal coordinates
         ctx.torus.normalize(ctx.player.pos, ctx.player.pre);
     }
+
+    for (const rock of ctx.rocks) {
+        if (rock.enabled) {
+
+            // Advance state
+            rock.pre = {...rock.pos};
+
+            // Apply physics
+            rock.pos.x += (rock.vel.x * dt);
+            rock.pos.y += (rock.vel.y * dt);
+            rock.pos.th += (rock.vel.th * dt);
+
+            // Normalize toroidal coordinates
+            ctx.torus.normalize(rock.pos, rock.pre);
+        }
+    }
 }
 
 function render(ctx, blend) {
@@ -116,6 +138,10 @@ function render(ctx, blend) {
     // Render rocks
     for (const rock of ctx.rocks) {
         if (rock.enabled) {
+            ctx.torus.kaleidescope(
+                rock.pos.blend(rock.pre, blend),
+                rock.mesh.radius()
+            ).forEach(pos => renderer.pushMesh(rock.mesh, pos.transform()));
         }
     }
 
