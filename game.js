@@ -42,11 +42,19 @@ function setup(ctx) {
     for (let i = 0; i < ROCK_COUNT; i++) {
         ctx.rocks.push({
             enabled: true,
-            pos: new Position(Math.pow(-1, i) * (i + 1) * 50, Math.pow(-1, i * 2) * (i + 1) * 20, 0),
-            vel: new Position(0, 0, 2),
+            pos: new Position(
+                Math.pow(-1, i) * (i + 1) * 50,
+                Math.pow(-1, i * 2) * (i + 1) * 20,
+                i * Math.PI / 2
+            ),
+            vel: new Position(
+                Math.pow(-1, i) * (i + 1) * 3,
+                Math.pow(-1, i) * (ROCK_COUNT - i) * 6,
+                Math.pow(-1, i) * 3
+            ),
             mesh: new Mesh([
                 new Ellipse(
-                    0, 0, 20, 15, 0,
+                    0, 0, 20, 18, 0,
                     'rgb(0 0 0)',
                     'rgb(128 128 128)',
                 )

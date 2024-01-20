@@ -254,13 +254,17 @@ class Ellipse extends Primitive {
         const by = m[5] / m[8];
         const a = Math.sqrt((ax - x) * (ax - x) + (ay - y) * (ay - y));
         const b = Math.sqrt((bx - x) * (bx - x) + (by - y) * (by - y));
-        const th = Math.acos((ax - x) / a);
 
-        gfx.beginPath();
+        let th = Math.acos((ax - x) / a);
+
+        if (ay - y < 0) {
+            th = 2 * Math.PI - th;
+        }
 
         gfx.strokeStyle = this.stroke;
         gfx.fillStyle = this.fill;
 
+        gfx.beginPath();
         gfx.ellipse(x, y, a, b, th, 0, Math.PI * 2);
 
         gfx.stroke();
@@ -292,11 +296,10 @@ class Polygon extends Primitive {
     draw(gfx, transform) {
         const [start, ...coords] = this.vs.map(v => Transform.Apply(transform, v));
 
-        gfx.beginPath();
-
         gfx.strokeStyle = this.stroke;
         gfx.fillStyle = this.fill;
 
+        gfx.beginPath();
         gfx.moveTo(start[0], start[1]);
 
         for (const coord of coords) {
@@ -304,6 +307,7 @@ class Polygon extends Primitive {
         }
 
         gfx.closePath();
+
         gfx.stroke();
         gfx.fill();
     }
