@@ -212,40 +212,51 @@ class Mesh {
 class Primitive {
 
     #r;
+    stroke;
+    fill;
 
-    constructor(r) {
+    constructor(r, stroke, fill) {
         this.#r = r;
+        this.stroke = stroke || 'rgb(0 0 0 / 1)';
+        this.fill = fill || 'rgb(0 0 0 / 0)';
     }
 
     radius() {
         return this.#r;
     }
 
-    draw(gfx, transform) {
+    draw(gfx) {
     }
 }
 
 class Ellipse extends Primitive {
 
-    m;
-    stroke;
-    fill;
+    x;
+    y;
+    a;
+    b;
+    th;
 
     constructor(x, y, a, b, th, stroke, fill) {
-        super(Math.max(a, b));
+        super(Math.max(a, b), stroke, fill);
 
-        this.m = [
-            x, x + a * Math.cos(th), x - b * Math.sin(th),
-            y, y + a * Math.sin(th), y + b * Math.cos(th),
-            1, 1, 1
-        ];
-
-        this.stroke = stroke;
-        this.fill = fill;
+        this.x = x;
+        this.y = y;
+        this.a = a;
+        this.b = b;
+        this.th = th;
     }
 
-    draw(gfx, transform) {
-        const m = Transform.Multiply(transform, this.m);
+    transform(transform) {
+        const m = Transform.Multiply(
+            transform,
+            [
+                this.x, this.x + this.a * Math.cos(this.th), this.x - this.b * Math.sin(this.th),
+                this.y, this.y + this.a * Math.sin(this.th), this.y + this.b * Math.cos(this.th),
+                1, 1, 1
+            ]
+        );
+
         const x = m[0] / m[6];
         const y = m[3] / m[6];
         const ax = m[1] / m[7];
@@ -261,11 +272,15 @@ class Ellipse extends Primitive {
             th = 2 * Math.PI - th;
         }
 
+        return new Ellipse(x, y, a, b, th, this.stroke, this.fill);
+    }
+
+    draw(gfx) {
         gfx.strokeStyle = this.stroke;
         gfx.fillStyle = this.fill;
 
         gfx.beginPath();
-        gfx.ellipse(x, y, a, b, th, 0, Math.PI * 2);
+        gfx.ellipse(this.x, this.y, this.a, this.b, this.th, 0, Math.PI * 2);
 
         gfx.stroke();
         gfx.fill();
@@ -274,27 +289,31 @@ class Ellipse extends Primitive {
 
 class Circle extends Ellipse {
 
-    constructor(x, y, r) {
-        super(x, y, r, r, 0);
+    constructor(x, y, r, stroke, fill) {
+        super(x, y, r, r, 0, stroke, fill);
     }
 }
 
 class Polygon extends Primitive {
 
     vs;
-    stroke;
-    fill;
 
     constructor(vs, stroke, fill) {
-        super(Math.sqrt(Math.max(...vs.map(v => v[0] * v[0] + v[1] * v[1]))));
+        super(Math.sqrt(Math.max(...vs.map(v => v[0] * v[0] + v[1] * v[1]))), stroke, fill);
 
         this.vs = vs;
-        this.stroke = stroke;
-        this.fill = fill;
     }
 
-    draw(gfx, transform) {
-        const [start, ...coords] = this.vs.map(v => Transform.Apply(transform, v));
+    transform(transform) {
+        return new Polygon(
+            this.vs.map(v => Transform.Apply(transform, v)),
+            this.stroke,
+            this.fill
+        );
+    }
+
+    draw(gfx) {
+        const [start, ...coords] = this.vs;
 
         gfx.strokeStyle = this.stroke;
         gfx.fillStyle = this.fill;

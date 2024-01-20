@@ -93,7 +93,7 @@ function step(ctx, dt, t) {
         }
 
         // Advance state
-        ctx.player.pre = {...ctx.player.pos};
+        ctx.player.pre = { ...ctx.player.pos };
 
         // Apply physics
         const cos = Math.cos(ctx.player.pos.th + Math.PI / 2);
@@ -120,7 +120,7 @@ function step(ctx, dt, t) {
         if (rock.enabled) {
 
             // Advance state
-            rock.pre = {...rock.pos};
+            rock.pre = { ...rock.pos };
 
             // Apply physics
             rock.pos.x += (rock.vel.x * dt);

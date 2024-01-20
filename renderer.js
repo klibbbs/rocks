@@ -49,10 +49,9 @@ class Renderer {
         const num = this.#primitives.length;
 
         for (let i = 0; i < num; i++) {
-            this.#primitives[i].draw(
-                this.#gfx,
-                Transform.Multiply(this.#view, camera.transform(), this.#transforms[i])
-            );
+            const transform = Transform.Multiply(this.#view, camera.transform(), this.#transforms[i]);
+
+            this.#primitives[i].transform(transform).draw(this.#gfx);
         }
 
         this.#primitives = [];
