@@ -137,19 +137,25 @@ function render(ctx, blend) {
 
     // Render player
     if (ctx.player.enabled) {
-        ctx.torus.kaleidescope(
-            ctx.player.pos.blend(ctx.player.pre, blend),
-            ctx.player.mesh.radius()
-        ).forEach(pos => renderer.pushMesh(ctx.player.mesh, pos.transform()));
+        renderer.pushMesh(
+            ctx.player.mesh,
+            ctx.torus.kaleidescope(
+                ctx.player.pos.blend(ctx.player.pre, blend),
+                ctx.player.mesh.radius()
+            ).map(pos => pos.transform())
+        );
     }
 
     // Render rocks
     for (const rock of ctx.rocks) {
         if (rock.enabled) {
-            ctx.torus.kaleidescope(
-                rock.pos.blend(rock.pre, blend),
-                rock.mesh.radius()
-            ).forEach(pos => renderer.pushMesh(rock.mesh, pos.transform()));
+            renderer.pushMesh(
+                rock.mesh,
+                ctx.torus.kaleidescope(
+                    rock.pos.blend(rock.pre, blend),
+                    rock.mesh.radius()
+                ).map(pos => pos.transform())
+            );
         }
     }
 

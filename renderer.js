@@ -8,7 +8,7 @@ class Renderer {
     #default_stroke = 'rgba(0, 0, 0, 1)';
     #default_fill = 'rgba(0, 0, 0, 0)';
 
-    #primitives = [];
+    #prims = [];
     #transforms = [];
 
     constructor(canvas, rect) {
@@ -34,27 +34,29 @@ class Renderer {
         this.#gfx.fillRect(this.#screen.x, this.#screen.y, this.#screen.w, this.#screen.h);
     }
 
-    pushMesh(mesh, transform) {
+    pushMesh(mesh, transforms) {
         for (const prim of mesh.prims) {
-            this.pushPrimitive(prim, transform);
+            this.pushPrimitive(prim, transforms);
         }
     }
 
-    pushPrimitive(primitive, transform) {
-        this.#primitives.push(primitive);
-        this.#transforms.push(transform);
+    pushPrimitive(prim, transforms) {
+        for (const transform of transforms) {
+            this.#prims.push(prim);
+            this.#transforms.push(transform);
+        }
     }
 
     render(camera) {
-        const num = this.#primitives.length;
+        const num = this.#prims.length;
 
         for (let i = 0; i < num; i++) {
             const transform = Transform.Multiply(this.#view, camera.transform(), this.#transforms[i]);
 
-            this.#primitives[i].transform(transform).draw(this.#gfx);
+            this.#prims[i].transform(transform).draw(this.#gfx);
         }
 
-        this.#primitives = [];
+        this.#prims = [];
         this.#transforms = [];
     }
 }
