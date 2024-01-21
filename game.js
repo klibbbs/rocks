@@ -24,14 +24,14 @@ function setup(ctx) {
 
     ctx.player = {
         enabled: true,
-        pos: new Position(0, 0, 0),
+        pos: new Position(0, 0, Math.PI / 2),
         pre: new Position(),
         vel: new Position(),
         mesh: new Mesh([
             new Polygon(
-                [[0, 10], [8, -6], [0, -3], [-8, -6]],
-                'rgb(0 0 0)',
-                'rgb(255 255 0)',
+                [[10, 0], [-6, 8], [-3, 0], [-6, -8]],
+                'black',
+                'yellow',
             )
         ]),
         hull: new Hull(
@@ -49,7 +49,6 @@ function setup(ctx) {
 
     for (let i = 0; i < ROCK_COUNT; i++) {
         ctx.rocks.push({
-            enabled: true,
             pos: new Position(
                 Math.pow(-1, i) * (i + 1) * 50,
                 Math.pow(-1, i * 2) * (i + 1) * 20,
@@ -63,8 +62,8 @@ function setup(ctx) {
             mesh: new Mesh([
                 new Ellipse(
                     0, 0, 20, 18, 0,
-                    'rgb(0 0 0)',
-                    'rgb(128 128 128)',
+                    'black',
+                    'gray',
                 )
             ]),
             hull: new Hull(
@@ -84,36 +83,39 @@ function step(ctx, dt, t) {
 
     if (ctx.player.enabled) {
 
-        // Handle inputs
-        const up = input.keydown('ArrowUp');
-        const down = input.keydown('ArrowDown');
+        // Handle controls
+        const forward = input.keydown('ArrowUp');
+        const back = input.keydown('ArrowDown');
+
         const left = input.keydown('ArrowLeft');
         const right = input.keydown('ArrowRight');
-        const space = input.keydown('Space');
+
+        const shoot = input.keypress('Space');
 
         let w = 0;
         let a = 0;
-        let shoot = false;
 
         if (left && !right || right && !left) {
             w = left ? PLAYER_W : -PLAYER_W;
         }
 
-        if (up && !down || down && !up) {
-            a = up ? PLAYER_A : -PLAYER_A / 2;
+        if (forward && !back || back && !forward) {
+            a = forward ? PLAYER_A : -PLAYER_A / 2;
         }
 
-        if (space) {
-            shoot = true;
+        // Determine orientation
+        const cos = Math.cos(ctx.player.pos.th);
+        const sin = Math.sin(ctx.player.pos.th);
+
+        // Shoot
+        if (shoot) {
+
         }
 
         // Advance state
         ctx.player.pre = { ...ctx.player.pos };
 
         // Apply physics
-        const cos = Math.cos(ctx.player.pos.th + Math.PI / 2);
-        const sin = Math.sin(ctx.player.pos.th + Math.PI / 2);
-
         const ax = a * cos;
         const ay = a * sin;
 
@@ -146,33 +148,35 @@ function step(ctx, dt, t) {
     }
 
     for (const rock of ctx.rocks) {
-        if (rock.enabled) {
 
-            // Advance state
-            rock.pre = { ...rock.pos };
+        // Advance state
+        rock.pre = { ...rock.pos };
 
-            // Apply physics
-            rock.pos.x += (rock.vel.x * dt);
-            rock.pos.y += (rock.vel.y * dt);
-            rock.pos.th += (rock.vel.th * dt);
+        // Apply physics
+        rock.pos.x += (rock.vel.x * dt);
+        rock.pos.y += (rock.vel.y * dt);
+        rock.pos.th += (rock.vel.th * dt);
 
-            // Normalize toroidal coordinates
-            ctx.torus.normalize(rock.pos, rock.pre);
+        // Normalize toroidal coordinates
+        ctx.torus.normalize(rock.pos, rock.pre);
 
-            // Handle collisions
-            rock.hull.mesh.prims[0].stroke = 'rgb(0 0 0)';
+        // Handle collisions
+        rock.hull.mesh.prims[0].stroke = 'rgb(0 0 0)';
 
-            collider.pushHull(
-                rock.hull,
-                ctx.torus.kaleidescope(
-                    rock.pos,
-                    rock.hull.mesh.radius()
-                ).map(pos => pos.transform()),
-                ray => {
-                    rock.hull.mesh.prims[0].stroke = 'rgb(255 0 0)';
-                }
-            );
-        }
+        collider.pushHull(
+            rock.hull,
+            ctx.torus.kaleidescope(
+                rock.pos,
+                rock.hull.mesh.radius()
+            ).map(pos => pos.transform()),
+            ray => {
+                rock.hull.mesh.prims[0].stroke = 'rgb(255 0 0)';
+            }
+        );
+    }
+
+    for (const shot of ctx.shots) {
+
     }
 
     // Detect collision
@@ -183,23 +187,21 @@ function render(ctx, blend) {
 
     // Render rocks
     for (const rock of ctx.rocks) {
-        if (rock.enabled) {
-            renderer.pushMesh(
-                rock.mesh,
-                ctx.torus.kaleidescope(
-                    rock.pos.blend(rock.pre, blend),
-                    rock.mesh.radius()
-                ).map(pos => pos.transform())
-            );
+        renderer.pushMesh(
+            rock.mesh,
+            ctx.torus.kaleidescope(
+                rock.pos.blend(rock.pre, blend),
+                rock.mesh.radius()
+            ).map(pos => pos.transform())
+        );
 
-            renderer.pushMesh(
-                rock.hull.mesh,
-                ctx.torus.kaleidescope(
-                    rock.pos.blend(rock.pre, blend),
-                    rock.hull.mesh.radius()
-                ).map(pos => pos.transform())
-            );
-        }
+        renderer.pushMesh(
+            rock.hull.mesh,
+            ctx.torus.kaleidescope(
+                rock.pos.blend(rock.pre, blend),
+                rock.hull.mesh.radius()
+            ).map(pos => pos.transform())
+        );
     }
 
     // Render player
