@@ -181,25 +181,6 @@ function step(ctx, dt, t) {
 
 function render(ctx, blend) {
 
-    // Render player
-    if (ctx.player.enabled) {
-        renderer.pushMesh(
-            ctx.player.mesh,
-            ctx.torus.kaleidescope(
-                ctx.player.pos.blend(ctx.player.pre, blend),
-                ctx.player.mesh.radius()
-            ).map(pos => pos.transform())
-        );
-
-        renderer.pushMesh(
-            ctx.player.hull.mesh,
-            ctx.torus.kaleidescope(
-                ctx.player.pos.blend(ctx.player.pre, blend),
-                ctx.player.hull.mesh.radius()
-            ).map(pos => pos.transform())
-        );
-    }
-
     // Render rocks
     for (const rock of ctx.rocks) {
         if (rock.enabled) {
@@ -219,6 +200,25 @@ function render(ctx, blend) {
                 ).map(pos => pos.transform())
             );
         }
+    }
+
+    // Render player
+    if (ctx.player.enabled) {
+        renderer.pushMesh(
+            ctx.player.mesh,
+            ctx.torus.kaleidescope(
+                ctx.player.pos.blend(ctx.player.pre, blend),
+                ctx.player.mesh.radius()
+            ).map(pos => pos.transform())
+        );
+
+        renderer.pushMesh(
+            ctx.player.hull.mesh,
+            ctx.torus.kaleidescope(
+                ctx.player.pos.blend(ctx.player.pre, blend),
+                ctx.player.hull.mesh.radius()
+            ).map(pos => pos.transform())
+        );
     }
 
     // Render shots
