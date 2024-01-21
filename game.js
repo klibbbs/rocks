@@ -8,8 +8,12 @@ const collider = new Collider();
 const CAMERA_H = 200;
 const CAMERA_W = renderer.aspect * CAMERA_H;
 
-const PLAYER_A = 100;
-const PLAYER_W = Math.PI;
+const PLAYER_A = 200;
+const PLAYER_W = Math.PI * 1.5;
+const PLAYER_RECOIL = 400;
+
+const SHOT_V = 200;
+const SHOT_TTL = 1000 * .75 * CAMERA_H / SHOT_V;
 
 const ROCK_COUNT = 3;
 
@@ -39,16 +43,17 @@ function setup(ctx) {
                 new Circle(0, 0, 10),
             ]),
             'ship',
-            ['rock']
+            ['shot', 'rock']
         ),
     };
 
-    ctx.shots = [];
-
-    ctx.rocks = [];
+    ctx.id = 0;
+    ctx.shots = new Map();
+    ctx.rocks = new Map();
 
     for (let i = 0; i < ROCK_COUNT; i++) {
-        ctx.rocks.push({
+        ctx.rocks.set(++ctx.id, {
+            id: ctx.id,
             pos: new Position(
                 Math.pow(-1, i) * (i + 1) * 50,
                 Math.pow(-1, i * 2) * (i + 1) * 20,
@@ -109,7 +114,34 @@ function step(ctx, dt, t) {
 
         // Shoot
         if (shoot) {
+            a -= PLAYER_RECOIL;
 
+            ctx.shots.set(++ctx.id, {
+                id: ctx.id,
+                expires: performance.now() + SHOT_TTL,
+                pos: new Position(
+                    10 * cos + ctx.player.pos.x,
+                    10 * sin + ctx.player.pos.y
+                ),
+                vel: new Position(
+                    SHOT_V * cos + ctx.player.vel.x,
+                    SHOT_V * sin + ctx.player.vel.y
+                ),
+                mesh: new Mesh([
+                    new Circle(
+                        0, 0, 1,
+                        'black',
+                        'white',
+                    )
+                ]),
+                hull: new Hull(
+                    new Mesh([
+                        new Circle(0, 0, 1)
+                    ]),
+                    'shot',
+                    ['ship', 'rock']
+                ),
+            });
         }
 
         // Advance state
@@ -133,7 +165,7 @@ function step(ctx, dt, t) {
         ctx.torus.normalize(ctx.player.pos, ctx.player.pre);
 
         // Handle collisions
-        ctx.player.hull.mesh.prims[0].stroke = 'rgb(0 0 0)';
+        ctx.player.hull.mesh.prims[0].stroke = 'black';
 
         collider.pushHull(
             ctx.player.hull,
@@ -142,12 +174,45 @@ function step(ctx, dt, t) {
                 ctx.player.hull.mesh.radius()
             ).map(pos => pos.transform()),
             ray => {
-                ctx.player.hull.mesh.prims[0].stroke = 'rgb(255 0 0)';
+                ctx.player.hull.mesh.prims[0].stroke = 'red';
             }
         );
     }
 
-    for (const rock of ctx.rocks) {
+    ctx.shots.forEach(shot => {
+
+        // Handle expiration
+        if (performance.now() > shot.expires) {
+            ctx.shots.delete(shot.id);
+            return;
+        }
+
+        // Advance state
+        shot.pre = { ...shot.pos };
+
+        // Apply physics
+        shot.pos.x += (shot.vel.x * dt);
+        shot.pos.y += (shot.vel.y * dt);
+
+        // Normalize toroidal coordinates
+        ctx.torus.normalize(shot.pos, shot.pre);
+
+        // Handle collisions
+        shot.hull.mesh.prims[0].stroke = 'black';
+
+        collider.pushHull(
+            shot.hull,
+            ctx.torus.kaleidescope(
+                shot.pos,
+                shot.hull.mesh.radius()
+            ).map(pos => pos.transform()),
+            ray => {
+                shot.hull.mesh.prims[0].stroke = 'red' ;
+            }
+        );
+    });
+
+    ctx.rocks.forEach(rock => {
 
         // Advance state
         rock.pre = { ...rock.pos };
@@ -161,7 +226,7 @@ function step(ctx, dt, t) {
         ctx.torus.normalize(rock.pos, rock.pre);
 
         // Handle collisions
-        rock.hull.mesh.prims[0].stroke = 'rgb(0 0 0)';
+        rock.hull.mesh.prims[0].stroke = 'black';
 
         collider.pushHull(
             rock.hull,
@@ -170,14 +235,10 @@ function step(ctx, dt, t) {
                 rock.hull.mesh.radius()
             ).map(pos => pos.transform()),
             ray => {
-                rock.hull.mesh.prims[0].stroke = 'rgb(255 0 0)';
+                rock.hull.mesh.prims[0].stroke = 'red';
             }
         );
-    }
-
-    for (const shot of ctx.shots) {
-
-    }
+    });
 
     // Detect collision
     collider.collide();
@@ -186,7 +247,7 @@ function step(ctx, dt, t) {
 function render(ctx, blend) {
 
     // Render rocks
-    for (const rock of ctx.rocks) {
+    ctx.rocks.forEach(rock => {
         renderer.pushMesh(
             rock.mesh,
             ctx.torus.kaleidescope(
@@ -202,7 +263,26 @@ function render(ctx, blend) {
                 rock.hull.mesh.radius()
             ).map(pos => pos.transform())
         );
-    }
+    });
+
+    // Render shots
+    ctx.shots.forEach(shot => {
+        renderer.pushMesh(
+            shot.mesh,
+            ctx.torus.kaleidescope(
+                shot.pos.blend(shot.pre, blend),
+                shot.mesh.radius()
+            ).map(pos => pos.transform())
+        );
+
+        renderer.pushMesh(
+            shot.hull.mesh,
+            ctx.torus.kaleidescope(
+                shot.pos.blend(shot.pre, blend),
+                shot.hull.mesh.radius()
+            ).map(pos => pos.transform())
+        );
+    });
 
     // Render player
     if (ctx.player.enabled) {
@@ -221,10 +301,6 @@ function render(ctx, blend) {
                 ctx.player.hull.mesh.radius()
             ).map(pos => pos.transform())
         );
-    }
-
-    // Render shots
-    for (const shot of ctx.shots) {
     }
 
     // Render scene
