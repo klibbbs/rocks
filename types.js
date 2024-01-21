@@ -1,3 +1,5 @@
+const EPSILON = .0001;
+
 class Torus {
 
     #l;
@@ -249,7 +251,7 @@ class Primitive {
     }
 
     collide(prim) {
-
+        throw new Error(`Collision not supported for ${this.constructor.name}`);
     }
 }
 
@@ -309,10 +311,6 @@ class Ellipse extends Primitive {
         gfx.stroke();
         gfx.fill();
     }
-
-    collide(prim) {
-        throw new Error(`Collision not supported for Ellipse`);
-    }
 }
 
 class Circle extends Ellipse {
@@ -324,7 +322,7 @@ class Circle extends Ellipse {
     transform(transform) {
         const ellipse = super.transform(transform);
 
-        if (Math.abs(ellipse.a - ellipse.b) < .0001) {
+        if (Math.abs(ellipse.a - ellipse.b) < EPSILON) {
             return new Circle(ellipse.x, ellipse.y, ellipse.a, this.stroke, this.fill);
         } else {
             return ellipse;
@@ -345,6 +343,34 @@ class Circle extends Ellipse {
         } else {
             throw new Error(`Collision not supported between Circle and ${prim.constructor.name}`);
         }
+    }
+}
+
+
+class Point extends Circle {
+
+    constructor(x, y) {
+        super(x, y, 0);
+    }
+
+    draw(gfx) {
+    }
+
+    transform(transform) {
+        const v = Transform.Apply(
+            transform,
+            [this.x, this.y]
+        );
+
+        return new Point(v[0], v[1]);
+    }
+
+    collide(prim) {
+        if (prim instanceof Point) {
+            return;
+        }
+
+        return super.collide(prim);
     }
 }
 
@@ -383,9 +409,5 @@ class Polygon extends Primitive {
 
         gfx.stroke();
         gfx.fill();
-    }
-
-    collide(prim) {
-        throw new Error(`Collision not supported for Ellipse`);
     }
 }

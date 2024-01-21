@@ -136,7 +136,7 @@ function step(ctx, dt, t) {
                 ]),
                 hull: new Hull(
                     new Mesh([
-                        new Circle(0, 0, 1)
+                        new Point(0, 0)
                     ]),
                     'shot',
                     ['ship', 'rock']
@@ -272,14 +272,6 @@ function render(ctx, blend) {
             ctx.torus.kaleidescope(
                 shot.pos.blend(shot.pre, blend),
                 shot.mesh.radius()
-            ).map(pos => pos.transform())
-        );
-
-        renderer.pushMesh(
-            shot.hull.mesh,
-            ctx.torus.kaleidescope(
-                shot.pos.blend(shot.pre, blend),
-                shot.hull.mesh.radius()
             ).map(pos => pos.transform())
         );
     });
