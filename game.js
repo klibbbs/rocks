@@ -10,7 +10,7 @@ const CAMERA_W = renderer.aspect * CAMERA_H;
 
 const PLAYER_A = 200;
 const PLAYER_W = Math.PI * 1.5;
-const PLAYER_RECOIL = 400;
+const PLAYER_RECOIL = 200;
 
 const SHOT_V = 200;
 const SHOT_TTL = 1000 * .75 * CAMERA_H / SHOT_V;
@@ -173,7 +173,7 @@ function step(ctx, dt, t) {
                 ctx.player.pos,
                 ctx.player.hull.mesh.radius()
             ).map(pos => pos.transform()),
-            ray => {
+            collision => {
                 ctx.player.hull.mesh.prims[0].stroke = 'red';
             }
         );
@@ -206,8 +206,8 @@ function step(ctx, dt, t) {
                 shot.pos,
                 shot.hull.mesh.radius()
             ).map(pos => pos.transform()),
-            ray => {
-                shot.hull.mesh.prims[0].stroke = 'red' ;
+            collision => {
+                ctx.shots.delete(shot.id);
             }
         );
     });
@@ -234,7 +234,7 @@ function step(ctx, dt, t) {
                 rock.pos,
                 rock.hull.mesh.radius()
             ).map(pos => pos.transform()),
-            ray => {
+            collision => {
                 rock.hull.mesh.prims[0].stroke = 'red';
             }
         );

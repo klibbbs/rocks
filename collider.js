@@ -61,11 +61,17 @@ class Collider {
 
                 if (ray) {
                     if (this.#handlers[i]) {
-                        this.#handlers[i](ray);
+                        this.#handlers[i]({
+                            ray: ray,
+                            target: this.#hulls[j].tag,
+                        });
                     }
 
                     if (this.#handlers[j]) {
-                        this.#handlers[j](ray);
+                        this.#handlers[j]({
+                            ray: ray,
+                            target: this.#hulls[i].tag,
+                        });
                     }
                 }
             }
