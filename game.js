@@ -16,8 +16,10 @@ const SHOT_V = 200;
 const SHOT_TTL = 1000 * .75 * CAMERA_H / SHOT_V;
 
 const ROCK_COUNT = 3;
+const ROCK_SIZE = 4;
+const ROCK_SIZE_MULT = 5;
 
-controller.play(30);
+controller.play(60);
 
 function setup(ctx) {
     console.log('Setup...');
@@ -54,6 +56,7 @@ function setup(ctx) {
     for (let i = 0; i < ROCK_COUNT; i++) {
         ctx.rocks.set(++ctx.id, {
             id: ctx.id,
+            size: ROCK_SIZE,
             pos: new Position(
                 Math.pow(-1, i) * (i + 1) * 50,
                 Math.pow(-1, i * 2) * (i + 1) * 20,
@@ -62,18 +65,18 @@ function setup(ctx) {
             vel: new Position(
                 Math.pow(-1, i) * (i + 1) * 3,
                 Math.pow(-1, i) * (ROCK_COUNT - i) * 6,
-                Math.pow(-1, i) * 3
+                Math.pow(-1, i) * Math.PI / 2
             ),
             mesh: new Mesh([
                 new Ellipse(
-                    0, 0, 20, 18, 0,
+                    0, 0, ROCK_SIZE * ROCK_SIZE_MULT, ROCK_SIZE * ROCK_SIZE_MULT - 2, 0,
                     'black',
                     'gray',
                 )
             ]),
             hull: new Hull(
                 new Mesh([
-                    new Circle(0, 0, 20)
+                    new Circle(0, 0, ROCK_SIZE * ROCK_SIZE_MULT)
                 ]),
                 'rock',
                 ['ship', 'shot']
@@ -235,7 +238,53 @@ function step(ctx, dt, t) {
                 rock.hull.mesh.radius()
             ).map(pos => pos.transform()),
             collision => {
-                rock.hull.mesh.prims[0].stroke = 'red';
+
+                // Split large rocks
+                if (rock.size > 1) {
+                    const size = rock.size - 1;
+                    const r = size * ROCK_SIZE_MULT;
+                    const v = Math.sqrt(rock.vel.x * rock.vel.x + rock.vel.y * rock.vel.y) * 1.25;
+                    const cos = Math.cos(rock.pos.th);
+                    const sin = Math.sin(rock.pos.th);
+
+                    for (let i = 0; i < 2; i++) {
+                        const sign = Math.pow(-1, i);
+                        const pos = new Position(
+                            r * cos * sign + rock.pos.x,
+                            r * sin * sign + rock.pos.y,
+                            i * Math.PI / 3 + rock.pos.th
+                        );
+
+                        ctx.rocks.set(++ctx.id, {
+                            id: ctx.id,
+                            size: size,
+                            pos: pos,
+                            pre: pos,
+                            vel: new Position(
+                                v * cos * sign + rock.vel.x,
+                                v * sin * sign + rock.vel.y,
+                                sign * rock.vel.th * 1.25,
+                            ),
+                            mesh: new Mesh([
+                                new Ellipse(
+                                    0, 0, r, r - 2, 0,
+                                    'black',
+                                    'gray',
+                                )
+                            ]),
+                            hull: new Hull(
+                                new Mesh([
+                                    new Circle(0, 0, r)
+                                ]),
+                                'rock',
+                                ['ship', 'shot']
+                            ),
+                        });
+                    }
+                }
+
+                // Destroy original rock
+                ctx.rocks.delete(rock.id);
             }
         );
     });
@@ -253,14 +302,6 @@ function render(ctx, blend) {
             ctx.torus.kaleidescope(
                 rock.pos.blend(rock.pre, blend),
                 rock.mesh.radius()
-            ).map(pos => pos.transform())
-        );
-
-        renderer.pushMesh(
-            rock.hull.mesh,
-            ctx.torus.kaleidescope(
-                rock.pos.blend(rock.pre, blend),
-                rock.hull.mesh.radius()
             ).map(pos => pos.transform())
         );
     });
