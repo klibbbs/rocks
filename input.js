@@ -7,15 +7,28 @@ class Input {
         this.#canvas = canvas;
 
         document.addEventListener('keydown', event => {
-            this.#keydown[event.key] = event;
+            if (event.repeat) {
+                return;
+            }
+
+            this.#keydown[event.code] = event;
+            this.#keydown[event.code].__new = true;
         });
 
         document.addEventListener('keyup', event => {
-            delete this.#keydown[event.key];
+            delete this.#keydown[event.code];
         });
     }
 
-    keydown(key) {
-        return this.#keydown[key];
+    keydown(code) {
+        return this.#keydown[code];
+    }
+
+    keypress(code) {
+        if (this.#keydown[code] && this.#keydown[code].__new) {
+            this.#keydown[code].__new = false;
+
+            return this.#keydown[code];
+        }
     }
 }
