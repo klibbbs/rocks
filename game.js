@@ -3,6 +3,7 @@ const canvas = document.getElementById('game');
 const controller = new Controller(setup, step, render, cleanup, 50);
 const renderer = new Renderer(canvas);
 const input = new Input(canvas);
+const collider = new Collider();
 
 const CAMERA_H = 200;
 const CAMERA_W = renderer.aspect * CAMERA_H;
@@ -28,11 +29,18 @@ function setup(ctx) {
         vel: new Position(),
         mesh: new Mesh([
             new Polygon(
-                [[0, 10], [10, -10], [0, -5], [-10, -10]],
+                [[0, 10], [8, -6], [0, -3], [-8, -6]],
                 'rgb(0 0 0)',
                 'rgb(255 255 0)',
             )
         ]),
+        hull: new Hull(
+            new Mesh([
+                new Circle(0, 0, 10),
+            ]),
+            'ship',
+            ['rock']
+        ),
     };
 
     ctx.shots = [];
@@ -59,6 +67,13 @@ function setup(ctx) {
                     'rgb(128 128 128)',
                 )
             ]),
+            hull: new Hull(
+                new Mesh([
+                    new Circle(0, 0, 20)
+                ]),
+                'rock',
+                ['ship', 'shot']
+            ),
         });
     }
 
@@ -114,6 +129,20 @@ function step(ctx, dt, t) {
 
         // Normalize toroidal coordinates
         ctx.torus.normalize(ctx.player.pos, ctx.player.pre);
+
+        // Handle collisions
+        ctx.player.hull.mesh.prims[0].stroke = 'rgb(0 0 0)';
+
+        collider.pushHull(
+            ctx.player.hull,
+            ctx.torus.kaleidescope(
+                ctx.player.pos,
+                ctx.player.hull.mesh.radius()
+            ).map(pos => pos.transform()),
+            ray => {
+                ctx.player.hull.mesh.prims[0].stroke = 'rgb(255 0 0)';
+            }
+        );
     }
 
     for (const rock of ctx.rocks) {
@@ -129,8 +158,25 @@ function step(ctx, dt, t) {
 
             // Normalize toroidal coordinates
             ctx.torus.normalize(rock.pos, rock.pre);
+
+            // Handle collisions
+            rock.hull.mesh.prims[0].stroke = 'rgb(0 0 0)';
+
+            collider.pushHull(
+                rock.hull,
+                ctx.torus.kaleidescope(
+                    rock.pos,
+                    rock.hull.mesh.radius()
+                ).map(pos => pos.transform()),
+                ray => {
+                    rock.hull.mesh.prims[0].stroke = 'rgb(255 0 0)';
+                }
+            );
         }
     }
+
+    // Detect collision
+    collider.collide();
 }
 
 function render(ctx, blend) {
@@ -144,6 +190,14 @@ function render(ctx, blend) {
                 ctx.player.mesh.radius()
             ).map(pos => pos.transform())
         );
+
+        renderer.pushMesh(
+            ctx.player.hull.mesh,
+            ctx.torus.kaleidescope(
+                ctx.player.pos.blend(ctx.player.pre, blend),
+                ctx.player.hull.mesh.radius()
+            ).map(pos => pos.transform())
+        );
     }
 
     // Render rocks
@@ -154,6 +208,14 @@ function render(ctx, blend) {
                 ctx.torus.kaleidescope(
                     rock.pos.blend(rock.pre, blend),
                     rock.mesh.radius()
+                ).map(pos => pos.transform())
+            );
+
+            renderer.pushMesh(
+                rock.hull.mesh,
+                ctx.torus.kaleidescope(
+                    rock.pos.blend(rock.pre, blend),
+                    rock.hull.mesh.radius()
                 ).map(pos => pos.transform())
             );
         }

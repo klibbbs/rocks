@@ -127,6 +127,13 @@ class Position {
 
 class Transform {
 
+    static Origin(m) {
+        return [
+            m[2] / m[8],
+            m[5] / m[8],
+        ];
+    }
+
     static Apply(m, v) {
         const w = m[6] * v[0] + m[7] * v[1] + m[8];
 
@@ -192,6 +199,19 @@ class Rectangle {
     }
 }
 
+class Hull {
+
+    mesh;
+    tag;
+    targets;
+
+    constructor(mesh, tag, targets) {
+        this.mesh = mesh;
+        this.tag = tag;
+        this.targets = targets;
+    }
+}
+
 class Mesh {
 
     prims;
@@ -226,6 +246,10 @@ class Primitive {
     }
 
     draw(gfx) {
+    }
+
+    collide(prim) {
+
     }
 }
 
@@ -285,12 +309,42 @@ class Ellipse extends Primitive {
         gfx.stroke();
         gfx.fill();
     }
+
+    collide(prim) {
+        throw new Error(`Collision not supported for Ellipse`);
+    }
 }
 
 class Circle extends Ellipse {
 
     constructor(x, y, r, stroke, fill) {
         super(x, y, r, r, 0, stroke, fill);
+    }
+
+    transform(transform) {
+        const ellipse = super.transform(transform);
+
+        if (Math.abs(ellipse.a - ellipse.b) < .0001) {
+            return new Circle(ellipse.x, ellipse.y, ellipse.a, this.stroke, this.fill);
+        } else {
+            return ellipse;
+        }
+    }
+
+    collide(prim) {
+        if (prim instanceof Circle) {
+            const r = this.radius() + prim.radius();
+            const dx = this.x - prim.x;
+            const dy = this.y - prim.y;
+
+            if (dx * dx + dy * dy > r * r) {
+                return;
+            }
+
+            return true;
+        } else {
+            throw new Error(`Collision not supported between Circle and ${prim.constructor.name}`);
+        }
     }
 }
 
@@ -329,5 +383,9 @@ class Polygon extends Primitive {
 
         gfx.stroke();
         gfx.fill();
+    }
+
+    collide(prim) {
+        throw new Error(`Collision not supported for Ellipse`);
     }
 }

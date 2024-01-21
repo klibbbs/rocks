@@ -41,19 +41,19 @@ class Renderer {
     }
 
     pushPrimitive(prim, transforms) {
-        for (const transform of transforms) {
-            this.#prims.push(prim);
-            this.#transforms.push(transform);
-        }
+        this.#prims.push(prim);
+        this.#transforms.push(transforms);
     }
 
     render(camera) {
         const num = this.#prims.length;
 
         for (let i = 0; i < num; i++) {
-            const transform = Transform.Multiply(this.#view, camera.transform(), this.#transforms[i]);
+            for (const t of this.#transforms[i]) {
+                const transform = Transform.Multiply(this.#view, camera.transform(), t);
 
-            this.#prims[i].transform(transform).draw(this.#gfx);
+                this.#prims[i].transform(transform).draw(this.#gfx);
+            }
         }
 
         this.#prims = [];
