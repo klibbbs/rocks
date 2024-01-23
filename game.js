@@ -11,15 +11,17 @@ const CAMERA_W = renderer.aspect * CAMERA_H;
 const PLAYER_A = 200;
 const PLAYER_W = Math.PI * 1.5;
 const PLAYER_RECOIL = 200;
+const PLAYER_REGEN_TTL = 1;
+const PLAYER_SAFE_TTL = 3;
 
 const SHOT_V = 200;
-const SHOT_TTL = 1000 * .75 * CAMERA_H / SHOT_V;
+const SHOT_TTL = .75 * CAMERA_H / SHOT_V;
 
 const ROCK_COUNT = 3;
 const ROCK_SIZE = 4;
 const ROCK_SIZE_MULT = 5;
 
-controller.play(60);
+controller.play();
 
 function setup(ctx) {
     console.log('Setup...');
@@ -29,7 +31,10 @@ function setup(ctx) {
     ctx.torus = new Torus(-CAMERA_W / 2, CAMERA_W / 2, -CAMERA_H / 2, CAMERA_H / 2);
 
     ctx.player = {
-        enabled: true,
+        alive: true,
+        invincible: false,
+        lives: 2,
+        timer: undefined,
         pos: new Position(0, 0, Math.PI / 2),
         pre: new Position(),
         vel: new Position(),
@@ -89,7 +94,22 @@ function setup(ctx) {
 
 function step(ctx, dt, t) {
 
-    if (ctx.player.enabled) {
+    if (t > ctx.player.timer) {
+        if (ctx.player.alive) {
+            ctx.player.invincible = false;
+            ctx.player.timer = undefined;
+        } else {
+            ctx.player.alive = true;
+            ctx.player.invincible = true;
+            ctx.player.timer = ctx.player.timer = t + PLAYER_SAFE_TTL;
+
+            ctx.player.pos = new Position(0, 0, Math.PI / 2);
+            ctx.player.pre = { ...ctx.player.pos };
+            ctx.player.vel = new Position();
+        }
+    }
+
+    if (ctx.player.alive) {
 
         // Handle controls
         const forward = input.keydown('ArrowUp');
@@ -121,7 +141,7 @@ function step(ctx, dt, t) {
 
             ctx.shots.set(++ctx.id, {
                 id: ctx.id,
-                expires: performance.now() + SHOT_TTL,
+                expires: t + SHOT_TTL,
                 pos: new Position(
                     10 * cos + ctx.player.pos.x,
                     10 * sin + ctx.player.pos.y
@@ -169,6 +189,7 @@ function step(ctx, dt, t) {
 
         // Handle collisions
         ctx.player.hull.mesh.prims[0].stroke = 'black';
+        ctx.player.mesh.prims[0].fill = ctx.player.invincible ? 'orange' : 'yellow';
 
         collider.pushHull(
             ctx.player.hull,
@@ -178,6 +199,21 @@ function step(ctx, dt, t) {
             ).map(pos => pos.transform()),
             collision => {
                 ctx.player.hull.mesh.prims[0].stroke = 'red';
+
+                if (ctx.player.invincible) {
+                    ctx.player.mesh.prims[0].fill = 'green';
+                } else {
+                    // Destroy player
+                    ctx.player.alive = false;
+
+                    if (ctx.player.lives-- > 0) {
+                        ctx.player.timer = t + PLAYER_REGEN_TTL;
+                    } else {
+                        ctx.player.timer = undefined;
+
+                        console.log('GAME OVER');
+                    }
+                }
             }
         );
     }
@@ -185,7 +221,7 @@ function step(ctx, dt, t) {
     ctx.shots.forEach(shot => {
 
         // Handle expiration
-        if (performance.now() > shot.expires) {
+        if (t > shot.expires) {
             ctx.shots.delete(shot.id);
             return;
         }
@@ -238,6 +274,11 @@ function step(ctx, dt, t) {
                 rock.hull.mesh.radius()
             ).map(pos => pos.transform()),
             collision => {
+                rock.hull.mesh.prims[0].stroke = 'red';
+
+                if (collision.target === 'ship' && ctx.player.invincible) {
+                    return;
+                }
 
                 // Split large rocks
                 if (rock.size > 1) {
@@ -318,7 +359,7 @@ function render(ctx, blend) {
     });
 
     // Render player
-    if (ctx.player.enabled) {
+    if (ctx.player.alive) {
         renderer.pushMesh(
             ctx.player.mesh,
             ctx.torus.kaleidescope(
