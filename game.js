@@ -1,6 +1,6 @@
 const canvas = document.getElementById('game');
 
-const controller = new Controller(setup, step, render, cleanup, 50);
+const controller = new Controller(setup, step, render, cleanup, 20);
 const renderer = new Renderer(canvas);
 const input = new Input(canvas);
 const collider = new Collider();
@@ -159,7 +159,7 @@ function step(ctx, dt, t) {
                 ]),
                 hull: new Hull(
                     new Mesh([
-                        new Point(0, 0)
+                        new Circle(0, 0, 1)
                     ]),
                     'shot',
                     ['ship', 'rock']
@@ -201,7 +201,7 @@ function step(ctx, dt, t) {
                 ctx.player.hull.mesh.prims[0].stroke = 'red';
 
                 if (ctx.player.invincible) {
-                    ctx.player.mesh.prims[0].fill = 'green';
+                    ctx.player.mesh.prims[0].fill = 'red';
                 } else {
                     // Destroy player
                     ctx.player.alive = false;
