@@ -265,14 +265,16 @@ class Text extends Primitive {
     y;
     text;
     font;
+    align;
 
-    constructor(x, y, text, font, fill) {
+    constructor(x, y, text, fill, font, align) {
         super(0, undefined, fill);
 
         this.x = x;
         this.y = y;
         this.text = text;
         this.font = font;
+        this.align = align;
     }
 
     transform(transform) {
@@ -281,12 +283,13 @@ class Text extends Primitive {
             [this.x, this.y]
         );
 
-        return new Text(v[0], v[1], this.text, this.font, this.fill);
+        return new Text(v[0], v[1], this.text, this.fill, this.font, this.align);
     }
 
     draw(gfx) {
         gfx.fillStyle = this.fill;
-        gfx.font = this.font;
+        gfx.font = this.font || undefined;
+        gfx.textAlign = this.align || 'start';
         gfx.fillText(this.text, this.x, this.y);
     }
 }

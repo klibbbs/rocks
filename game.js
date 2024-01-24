@@ -213,7 +213,7 @@ function step(ctx, dt, t) {
                     } else {
                         ctx.player.timer = undefined;
 
-                        console.log('GAME OVER');
+                        // GAME OVER
                     }
                 }
             }
@@ -386,7 +386,7 @@ function render(ctx, blend) {
     renderer.clear('rgb(0 64 128)');
     renderer.render(ctx.camera);
 
-    // Render screen
+    // Render HUD
     for (let i = 0; i < ctx.player.lives; i++) {
         renderer.pushMesh(
             new Mesh([
@@ -403,15 +403,20 @@ function render(ctx, blend) {
         );
     }
 
-    renderer.pushMesh(
-        new Mesh([
-            new Text(0, 0, ctx.player.score, '25px monospace', 'white'),
-        ]),
+    renderer.pushPrimitive(
+        new Text(0, 0, ctx.player.score, 'white', '25px monospace'),
         [Transform.Translate(
             10 - CAMERA_W / 2,
             8 - CAMERA_H / 2
         )]
     );
+
+    if (ctx.player.lives < 0) {
+        renderer.pushPrimitive(
+            new Text(0, 0, 'GAME OVER', 'white', '50px monospace', 'center'),
+            [Transform.Identity()]
+        );
+    }
 
     renderer.render(ctx.camera);
 }
