@@ -22,7 +22,8 @@ const ROCK_SIZE = 4;
 const ROCK_SIZE_MULT = 5;
 const ROCK_SCORE_MULT = 10;
 
-const LEVEL_RESTART_TTL = 3;
+const LEVEL_RESTART_TTL = 1.5;
+const NEW_LIFE = 10000;
 
 controller.play();
 
@@ -39,6 +40,7 @@ function setup(ctx) {
         restart: false,
         level: 1,
         lives: 2,
+        next: NEW_LIFE,
         score: 0,
         timer: undefined,
         pos: new Position(0, 0, Math.PI / 2),
@@ -158,6 +160,11 @@ function step(ctx, dt, t) {
         ctx.player.restart = true;
         ctx.player.level++;
         ctx.player.timer = t + LEVEL_RESTART_TTL;
+    }
+
+    if (ctx.player.score >= ctx.player.next) {
+        ctx.player.lives++;
+        ctx.player.next += NEW_LIFE;
     }
 
     if (ctx.player.alive) {
