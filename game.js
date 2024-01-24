@@ -22,6 +22,8 @@ const ROCK_SIZE = 4;
 const ROCK_SIZE_MULT = 5;
 const ROCK_SCORE_MULT = 10;
 
+const LEVEL_RESTART_TTL = 3;
+
 controller.play();
 
 function setup(ctx) {
@@ -34,6 +36,8 @@ function setup(ctx) {
     ctx.player = {
         alive: true,
         invincible: false,
+        restart: false,
+        level: 1,
         lives: 2,
         score: 0,
         timer: undefined,
@@ -97,10 +101,49 @@ function setup(ctx) {
 function step(ctx, dt, t) {
 
     if (t > ctx.player.timer) {
-        if (ctx.player.alive) {
+        if (ctx.player.restart) {
+            ctx.player.restart = false;
+            ctx.player.timer = t + PLAYER_SAFE_TTL;
+            ctx.player.invincible = true;
+
+            ctx.player.pos = new Position(0, 0, Math.PI / 2);
+            ctx.player.pre = { ...ctx.player.pos };
+            ctx.player.vel = new Position();
+
+            for (let i = 0; i < ROCK_COUNT + ctx.player.level - 1; i++) {
+                ctx.rocks.set(++ctx.id, {
+                    id: ctx.id,
+                    size: ROCK_SIZE,
+                    pos: new Position(
+                        Math.pow(-1, i) * (i + 1) * 50,
+                        Math.pow(-1, i * 2) * (i + 1) * 20,
+                        i * Math.PI / 2
+                    ),
+                    vel: new Position(
+                        Math.pow(-1, i) * (i + 1) * 3,
+                        Math.pow(-1, i) * (ROCK_COUNT - i) * 6,
+                        Math.pow(-1, i) * Math.PI / 2
+                    ),
+                    mesh: new Mesh([
+                        new Ellipse(
+                            0, 0, ROCK_SIZE * ROCK_SIZE_MULT, ROCK_SIZE * ROCK_SIZE_MULT - 2, 0,
+                            'black',
+                            'gray',
+                        )
+                    ]),
+                    hull: new Hull(
+                        new Mesh([
+                            new Circle(0, 0, ROCK_SIZE * ROCK_SIZE_MULT)
+                        ]),
+                        'rock',
+                        ['ship', 'shot']
+                    ),
+                });
+            }
+        } else if (ctx.player.invincible) {
             ctx.player.invincible = false;
             ctx.player.timer = undefined;
-        } else {
+        } else if (!ctx.player.alive) {
             ctx.player.alive = true;
             ctx.player.invincible = true;
             ctx.player.timer = ctx.player.timer = t + PLAYER_SAFE_TTL;
@@ -109,6 +152,12 @@ function step(ctx, dt, t) {
             ctx.player.pre = { ...ctx.player.pos };
             ctx.player.vel = new Position();
         }
+    }
+
+    if (ctx.rocks.size <= 0 && ctx.player.restart === false) {
+        ctx.player.restart = true;
+        ctx.player.level++;
+        ctx.player.timer = t + LEVEL_RESTART_TTL;
     }
 
     if (ctx.player.alive) {
