@@ -247,11 +247,47 @@ class Primitive {
         return this.#r;
     }
 
+    transform(transform) {
+
+    }
+
     draw(gfx) {
     }
 
     collide(prim) {
         throw new Error(`Collision not supported for ${this.constructor.name}`);
+    }
+}
+
+class Text extends Primitive {
+
+    x;
+    y;
+    text;
+    font;
+
+    constructor(x, y, text, font, fill) {
+        super(0, undefined, fill);
+
+        this.x = x;
+        this.y = y;
+        this.text = text;
+        this.font = font;
+    }
+
+    transform(transform) {
+        const v = Transform.Apply(
+            transform,
+            [this.x, this.y]
+        );
+
+        return new Text(v[0], v[1], this.text, this.font, this.fill);
+    }
+
+    draw(gfx) {
+        gfx.fillStyle = this.fill;
+        gfx.font = this.font;
+        gfx.fillText(this.text, this.x, this.y);
     }
 }
 

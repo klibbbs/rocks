@@ -20,6 +20,7 @@ const SHOT_TTL = .75 * CAMERA_H / SHOT_V;
 const ROCK_COUNT = 3;
 const ROCK_SIZE = 4;
 const ROCK_SIZE_MULT = 5;
+const ROCK_SCORE_MULT = 10;
 
 controller.play();
 
@@ -34,6 +35,7 @@ function setup(ctx) {
         alive: true,
         invincible: false,
         lives: 2,
+        score: 0,
         timer: undefined,
         pos: new Position(0, 0, Math.PI / 2),
         pre: new Position(),
@@ -280,7 +282,18 @@ function step(ctx, dt, t) {
                     return;
                 }
 
-                // Split large rocks
+                // Increase score
+                if (collision.target === 'shot') {
+                    let score = ROCK_SCORE_MULT;
+
+                    for (let i = ROCK_SIZE; i > rock.size; i--) {
+                        score += score;
+                    }
+
+                    ctx.player.score += score;
+                }
+
+                // Split rocks
                 if (rock.size > 1) {
                     const size = rock.size - 1;
                     const r = size * ROCK_SIZE_MULT;
@@ -397,6 +410,16 @@ function render(ctx, blend) {
             )]
         );
     }
+
+    renderer.pushMesh(
+        new Mesh([
+            new Text(0, 0, ctx.player.score, '25px monospace', 'white'),
+        ]),
+        [Transform.Translate(
+            10 - CAMERA_W / 2,
+            8 - CAMERA_H / 2
+        )]
+    );
 
     renderer.render(ctx.camera);
 }
