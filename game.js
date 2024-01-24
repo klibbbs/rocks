@@ -22,8 +22,11 @@ const ROCK_SIZE = 4;
 const ROCK_SIZE_MULT = 5;
 const ROCK_SCORE_MULT = 10;
 
-const LEVEL_RESTART_TTL = 1.5;
+const LEVEL_RESTART_TTL = 3;
 const NEW_LIFE = 10000;
+
+const BONUS_ROCK_MULT = 2000;
+const BONUS_TICK = 100;
 
 controller.play();
 
@@ -42,7 +45,9 @@ function setup(ctx) {
         lives: 2,
         next: NEW_LIFE,
         score: 0,
+        bonus: 0,
         timer: undefined,
+        start: 0,
         pos: new Position(0, 0, Math.PI / 2),
         pre: new Position(),
         vel: new Position(),
@@ -105,6 +110,7 @@ function step(ctx, dt, t) {
     if (t > ctx.player.timer) {
         if (ctx.player.restart) {
             ctx.player.restart = false;
+            ctx.player.start = t;
             ctx.player.timer = t + PLAYER_SAFE_TTL;
             ctx.player.invincible = true;
 
@@ -157,7 +163,11 @@ function step(ctx, dt, t) {
     }
 
     if (ctx.rocks.size <= 0 && ctx.player.restart === false) {
+        const rocks = ctx.player.level + ROCK_COUNT - 1;
+
         ctx.player.restart = true;
+        ctx.player.bonus = Math.max(BONUS_ROCK_MULT * rocks - (t - ctx.player.start) * BONUS_TICK, 0);
+        ctx.player.score += ctx.player.bonus;
         ctx.player.level++;
         ctx.player.timer = t + LEVEL_RESTART_TTL;
     }
@@ -460,7 +470,7 @@ function render(ctx, blend) {
     }
 
     renderer.pushPrimitive(
-        new Text(0, 0, ctx.player.score, 'white', '25px monospace'),
+        new Text(0, 0, ctx.player.score, 'white', '20px monospace'),
         [Transform.Translate(
             10 - CAMERA_W / 2,
             8 - CAMERA_H / 2
@@ -469,7 +479,14 @@ function render(ctx, blend) {
 
     if (ctx.player.lives < 0) {
         renderer.pushPrimitive(
-            new Text(0, 0, 'GAME OVER', 'white', '50px monospace', 'center'),
+            new Text(0, 0, 'GAME OVER', 'white', '60px monospace', 'center'),
+            [Transform.Identity()]
+        );
+    }
+
+    if (ctx.player.restart) {
+        renderer.pushPrimitive(
+            new Text(0, 0, `TIME BONUS ${ctx.player.bonus}`, 'white', '40px monospace', 'center'),
             [Transform.Identity()]
         );
     }
