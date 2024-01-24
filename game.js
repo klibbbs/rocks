@@ -40,7 +40,7 @@ function setup(ctx) {
         vel: new Position(),
         mesh: new Mesh([
             new Polygon(
-                [[10, 0], [-6, 8], [-3, 0], [-6, -8]],
+                [[10, 0], [-6, 8], [-2, 0], [-6, -8]],
                 'black',
                 'yellow',
             )
@@ -379,6 +379,25 @@ function render(ctx, blend) {
 
     // Render scene
     renderer.clear('rgb(0 64 128)');
+    renderer.render(ctx.camera);
+
+    // Render screen
+    for (let i = 0; i < ctx.player.lives; i++) {
+        renderer.pushMesh(
+            new Mesh([
+                new Polygon(
+                    [[0, 5], [-4, -3], [0, -1], [4, -3]],
+                    'black',
+                    'yellow',
+                )
+            ]),
+            [Transform.Translate(
+                CAMERA_W / 2 - 15 - (i * 15),
+                10 - CAMERA_H / 2
+            )]
+        );
+    }
+
     renderer.render(ctx.camera);
 }
 
