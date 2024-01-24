@@ -164,9 +164,10 @@ function step(ctx, dt, t) {
 
     if (ctx.rocks.size <= 0 && ctx.player.restart === false) {
         const rocks = ctx.player.level + ROCK_COUNT - 1;
+        const bonus = BONUS_ROCK_MULT * rocks - (t - ctx.player.start) * BONUS_TICK;
 
         ctx.player.restart = true;
-        ctx.player.bonus = Math.max(BONUS_ROCK_MULT * rocks - (t - ctx.player.start) * BONUS_TICK, 0);
+        ctx.player.bonus = Math.round(Math.max(bonus, 0));
         ctx.player.score += ctx.player.bonus;
         ctx.player.level++;
         ctx.player.timer = t + LEVEL_RESTART_TTL;
