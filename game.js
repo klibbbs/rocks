@@ -380,14 +380,6 @@ function render(ctx, blend) {
                 ctx.player.mesh.radius()
             ).map(pos => pos.transform())
         );
-
-        renderer.pushMesh(
-            ctx.player.hull.mesh,
-            ctx.torus.kaleidescope(
-                ctx.player.pos.blend(ctx.player.pre, blend),
-                ctx.player.hull.mesh.radius()
-            ).map(pos => pos.transform())
-        );
     }
 
     // Render scene
