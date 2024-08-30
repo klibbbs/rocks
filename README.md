@@ -6,8 +6,8 @@ An asteroids clone.
 
 ## Setup
 
-1. Check out this repository to `/PATH>/rocks/`.
-2. Open <file:///PATH/rocks/index.html> in your browser.
+1. Check out this repository to `/<PATH>/rocks/`.
+2. Open `file:///<PATH>/rocks/index.html` in your browser.
 
 ## How to play
 
