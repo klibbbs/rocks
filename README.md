@@ -17,4 +17,7 @@ An asteroids clone.
 
 ## About
 
-The goal of this project was to write a simple, playable arcade game from start to finish in a reasonable amount of time. Game design patterns are pretty foreign to me, and I wanted to see what was involved in writing a general-purpose engine.
+Goals of this project:
+
+- Write a simple, playable arcade game from start to finish in a reasonable amount of time.
+- Learn what's involved in designing a game engine.
